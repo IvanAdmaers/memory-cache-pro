@@ -1,6 +1,6 @@
 {
   "name": "memory-cache-pro",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "A modern excellent fast well-tested reliable Caching Module that allows to keep your data in cache and incredibly fast to get it",
   "main": "index.js",
   "scripts": {
