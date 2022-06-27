@@ -1,6 +1,22 @@
 const has = Object.prototype.hasOwnProperty;
 
+interface IRecord {
+  timeout?: ReturnType<typeof setTimeout>;
+  value?: unknown;
+  expire?: number;
+}
+
 class MemoryCachePro {
+  private _cache: { [key: string]: any };
+
+  private _hitCount: number;
+
+  private _missCount: number;
+
+  private _size: number;
+  
+  private _debug: boolean;
+
   constructor() {
     this._cache = {};
     this._hitCount = 0;
@@ -18,7 +34,12 @@ class MemoryCachePro {
    * @param {function} timeoutCallback - Timeout callback
    * @returns {any} Cached value
    */
-  put(key, value, time, timeoutCallback) {
+  public put<T>(
+    key: string,
+    value: T | any,
+    time?: number,
+    timeoutCallback?: (key: string, value: T | any) => void
+  ): T | any {
     if (this._debug) {
       console.log('caching: %s = %j (@%s)', key, value, time);
     }
@@ -37,34 +58,34 @@ class MemoryCachePro {
       throw new Error('Cache timeout callback must be a function');
     }
 
-    const oldRecord = this._cache[key];
+    const oldRecord = this._cache[key as keyof typeof this._cache];
 
     if (oldRecord) {
-      clearTimeout(oldRecord.timeout);
+      clearTimeout((oldRecord as IRecord).timeout);
     }
 
     if (!oldRecord) {
       this._size += 1;
     }
 
-    const record = {
+    const record: IRecord = {
       value,
-      expire: Date.now() + time,
     };
+
+    record.expire = time !== undefined ? Date.now() + time : NaN;
 
     const isValidExpireTime = !Number.isNaN(record.expire);
 
-    if (isValidExpireTime) {
-      record.timeout = setTimeout(
-        function deleteByKeyAfterTime() {
-          this._delete(key);
+    const deleteByKeyAfterTime = () => {
+      this._delete(key);
 
-          if (timeoutCallback) {
-            timeoutCallback(key, value);
-          }
-        }.bind(this),
-        time
-      );
+      if (timeoutCallback) {
+        timeoutCallback(key, value);
+      }
+    };
+
+    if (isValidExpireTime) {
+      record.timeout = setTimeout(deleteByKeyAfterTime, time);
     }
 
     this._cache[key] = record;
@@ -78,14 +99,14 @@ class MemoryCachePro {
    * @param {string} key - Key
    * @returns {boolean} True if the record was deleted
    */
-  tryToDelete(key) {
+  public tryToDelete(key: string): boolean {
     let canDelete = true;
 
-    const oldRecord = this._cache[key];
+    const oldRecord: IRecord = this._cache[key as keyof typeof this._cache];
 
     if (oldRecord) {
       const isValidExpireTime = !Number.isNaN(oldRecord.expire);
-      const notExpired = oldRecord.expire > Date.now();
+      const notExpired = oldRecord.expire && oldRecord.expire > Date.now();
 
       if (isValidExpireTime && notExpired) {
         canDelete = false;
@@ -111,8 +132,8 @@ class MemoryCachePro {
    * @param {string} key - Record key
    * @returns {boolean} False if the record does not exist or true if it was deleted
    */
-  delete(key) {
-    const oldRecord = this._cache[key];
+  public delete(key: string): boolean {
+    const oldRecord: IRecord = this._cache[key as keyof typeof this._cache];
 
     if (!oldRecord) {
       return false;
@@ -129,19 +150,19 @@ class MemoryCachePro {
    * @private
    * @param {string} key - Key
    */
-  _delete(key) {
+  private _delete(key: string) {
     this._size -= 1;
-    delete this._cache[key];
+    delete this._cache[key as keyof typeof this._cache];
   }
 
   /**
    * This method clears (deletes) all keys in the storage
    */
-  clear() {
+  public clear(): void {
     const keys = Object.keys(this._cache);
 
     keys.forEach((key) => {
-      const { timeout } = this._cache[key];
+      const { timeout } = this._cache[key as keyof typeof this._cache];
 
       clearTimeout(timeout);
     });
@@ -161,8 +182,8 @@ class MemoryCachePro {
    * @param {string} key - Key
    * @returns {any | null} Cached value or null
    */
-  get(key) {
-    const data = this._cache[key];
+  public get<T>(key: string): T | any | null {
+    const data: IRecord = this._cache[key as keyof typeof this._cache];
 
     if (typeof data === 'undefined') {
       if (this._debug) {
@@ -173,7 +194,7 @@ class MemoryCachePro {
     }
 
     const isValidExpireTime = Number.isNaN(data.expire);
-    const expired = data.expire >= Date.now();
+    const expired = data.expire && data.expire >= Date.now();
 
     if (isValidExpireTime || expired) {
       if (this._debug) {
@@ -199,7 +220,7 @@ class MemoryCachePro {
    *
    * @returns {number} Number of entries
    */
-  size() {
+  public size(): number {
     return this._size;
   }
 
@@ -208,7 +229,7 @@ class MemoryCachePro {
    *
    * @param {boolean} boolean - Debug status
    */
-  debug(status) {
+  public debug(status: boolean): void {
     this._debug = status;
   }
 
@@ -217,7 +238,7 @@ class MemoryCachePro {
    *
    * @returns {number} Number of misses
    */
-  misses() {
+  public misses(): number {
     return this._missCount;
   }
 
@@ -226,7 +247,7 @@ class MemoryCachePro {
    *
    * @returns {number} Number of hits
    */
-  hits() {
+  public hits(): number {
     return this._hitCount;
   }
 
@@ -235,7 +256,7 @@ class MemoryCachePro {
    *
    * @returns {number} Number of entries taking up space
    */
-  memsize() {
+  public memsize(): number {
     const size = Object.keys(this._cache).length;
 
     return size;
@@ -246,7 +267,7 @@ class MemoryCachePro {
    *
    * @returns {Array} Cache keys
    */
-  keys() {
+  public keys(): Array<string> {
     return Object.keys(this._cache);
   }
 
@@ -255,15 +276,15 @@ class MemoryCachePro {
    *
    * @returns {string} JSON string
    */
-  exportToJSON() {
-    const plainJSCache = {};
+  public exportToJSON(): string {
+    const plainJSCache: { [key: string]: any } = {};
 
     // Discard the `timeout` property.
     // Note: JSON doesn't support `NaN`, so convert it to `'NaN'`
     const keys = Object.keys(this._cache);
 
     keys.forEach((key) => {
-      const { value, expire } = this._cache[key];
+      const { value, expire } = this._cache[key] as IRecord;
 
       plainJSCache[key] = { value, expire: expire || 'NaN' };
     });
@@ -278,7 +299,10 @@ class MemoryCachePro {
    * @param {Object} options - Object with options: skipDuplicates (boolean)
    * @returns {number} New size of the cache
    */
-  importFromJSON(JSONToImport, options) {
+  public importFromJSON(
+    JSONToImport: string,
+    options?: { skipDuplicates?: boolean | undefined }
+  ): number {
     const cacheToImport = JSON.parse(JSONToImport);
     const currentTime = Date.now();
 
@@ -325,5 +349,5 @@ class MemoryCachePro {
   }
 }
 
-module.exports = new MemoryCachePro();
-module.exports.MemoryCachePro = MemoryCachePro;
+export default new MemoryCachePro();
+export { MemoryCachePro };

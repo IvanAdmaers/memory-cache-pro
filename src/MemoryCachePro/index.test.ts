@@ -1,4 +1,6 @@
-const { MemoryCachePro } = require('./index.js');
+/* eslint-disable @typescript-eslint/no-empty-function */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+import { MemoryCachePro } from '.';
 
 jest.useFakeTimers();
 
@@ -31,6 +33,7 @@ describe('cache', () => {
 
     it('should throw an error given a non-numeric timeout', () => {
       expect(() => {
+        // @ts-ignore
         cache.put('key', 'value', 'foo');
       }).toThrow();
     });
@@ -55,6 +58,7 @@ describe('cache', () => {
 
     it('should throw an error given a non-function timeout callback', () => {
       expect(() => {
+        // @ts-ignore
         cache.put('key', 'value', 100, 'foo');
       }).toThrow();
     });
@@ -485,8 +489,8 @@ describe('cache', () => {
 
       keys.forEach((key, index) => {
         const value = `value${index}`;
-        cache.put(key, value);
-        expect(cache.get(key)).toEqual(value);
+        cache.put(key as string, value);
+        expect(cache.get(key as string)).toEqual(value);
       });
     });
 

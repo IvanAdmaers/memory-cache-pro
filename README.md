@@ -57,10 +57,10 @@ const myDogCache = new MemoryCachePro();
 const myCatCache = new MemoryCachePro();
 
 myDogCache.put('rule', 'StopEatMySlippers!');
-myCatCache.put('rule', 'DoNotOpenMyRefrigerator!');
+myCatCache.put('rule', 'DoNotOpenMyFridge!');
 
-myDogCache.get('rule'); // StopEatMySlippers
-myCatCache.get('rule'); // DoNotOpenMyRefrigerator
+myDogCache.get('rule'); // StopEatMySlippers!
+myCatCache.get('rule'); // DoNotOpenMyFridge!
 ```
 ## API
 

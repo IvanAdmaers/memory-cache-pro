@@ -1,5 +1,7 @@
-/* eslint-disable no-unused-vars */
-const cache = require('./index.js');
+/* eslint-disable import/no-duplicates */
+/* eslint-disable import/first */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import cache from '.';
 
 /* Example 1 */
 
@@ -28,13 +30,13 @@ cache.put(
 
 /* Example 4 */
 
-const { MemoryCachePro } = require('./index.js');
+import { MemoryCachePro } from '.';
 
 const myDogCache = new MemoryCachePro();
 const myCatCache = new MemoryCachePro();
 
 myDogCache.put('rule', 'StopEatMySlippers!');
-myCatCache.put('rule', 'DoNotOpenMyRefrigerator!');
+myCatCache.put('rule', 'DoNotOpenMyFridge!');
 
-myDogCache.get('rule'); // StopEatMySlippers
-myCatCache.get('rule'); // DoNotOpenMyRefrigerator
+myDogCache.get('rule'); // StopEatMySlippers!
+myCatCache.get('rule'); // DoNotOpenMyFridge!
